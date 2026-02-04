@@ -624,7 +624,10 @@ def complete_analysis_workflow():
     print("\n8. TECHNICAL INDICATORS (AAPL)...")
 
     # Get single stock data for technical indicators
+    # NOTE: yfinance 0.2.28+ returns MultiIndex columns even for single tickers
+    # We flatten them to avoid DataFrame vs Series issues in calculations
     aapl_df = yf.download('AAPL', start='2024-01-01', end='2024-12-31', progress=False)
+    aapl_df.columns = aapl_df.columns.get_level_values(0)  # Flatten MultiIndex
     aapl_df = calculate_technical_indicators(aapl_df)
 
     print(f"   Latest values:")
@@ -691,7 +694,15 @@ MODERN PYTHON BEST PRACTICES FOR QUANT WORK:
    - .resample() on empty DataFrames no longer raises
    - Some string methods return nullable StringDtype
 
-8. DEBUGGING TIPS
+8. YFINANCE 0.2.28+ GOTCHA (IMPORTANT!)
+   - yf.download() now returns MultiIndex columns even for SINGLE tickers
+   - Columns look like: ('Close', 'AAPL') instead of just 'Close'
+   - This causes "Cannot set DataFrame to single column" errors
+   - FIX: Flatten columns after download for single tickers:
+         df.columns = df.columns.get_level_values(0)
+   - OR use: yf.Ticker('AAPL').history() which returns flat columns
+
+9. DEBUGGING TIPS
    - Use df.info() for quick overview
    - Use df.describe() for statistical summary
    - Check dtypes: df.dtypes
