@@ -1,0 +1,837 @@
+{
+  "metadata": {
+    "description": "Philanthropic spending analysis by category (2015-2024)",
+    "units": "millions USD",
+    "categories": {
+      "global_health": "Global Health & Development (North Star: Against Malaria Foundation)",
+      "animal_welfare": "Animal Welfare (North Star: Factory Farming Reform)",
+      "existential_risk": "Existential Risk (North Star: Pandemic Prevention, AI Safety)"
+    }
+  },
+  "data": {
+    "global_health": {
+      "total": {
+        "2015": 4720.1,
+        "2016": 4953.6,
+        "2017": 5237.5,
+        "2018": 5416.0,
+        "2019": 5682.0,
+        "2020": 6384.0,
+        "2021": 7250.0,
+        "2022": 7905.0,
+        "2023": 8057.0,
+        "2024": 8812.0
+      },
+      "weighted": {
+        "2015": 751.4749,
+        "2016": 772.2214,
+        "2017": 835.7575,
+        "2018": 879.7090000000001,
+        "2019": 928.048,
+        "2020": 1099.156,
+        "2021": 1409.5,
+        "2022": 1578.4,
+        "2023": 1320.253,
+        "2024": 1574.053
+      },
+      "components": {
+        "2015": {
+          "GiveWell": {
+            "total": 110.1,
+            "weighted": 93.4749
+          },
+          "Gates Foundation": {
+            "total": 3800,
+            "weighted": 570.0
+          },
+          "Wellcome Trust": {
+            "total": 800,
+            "weighted": 80.0
+          },
+          "Other EA": {
+            "total": 10,
+            "weighted": 8.0
+          }
+        },
+        "2016": {
+          "GiveWell": {
+            "total": 88.6,
+            "weighted": 75.2214
+          },
+          "Gates Foundation": {
+            "total": 4000,
+            "weighted": 600.0
+          },
+          "Wellcome Trust": {
+            "total": 850,
+            "weighted": 85.0
+          },
+          "Other EA": {
+            "total": 15,
+            "weighted": 12.0
+          }
+        },
+        "2017": {
+          "GiveWell": {
+            "total": 117.5,
+            "weighted": 99.75750000000001
+          },
+          "Gates Foundation": {
+            "total": 4200,
+            "weighted": 630.0
+          },
+          "Wellcome Trust": {
+            "total": 900,
+            "weighted": 90.0
+          },
+          "Other EA": {
+            "total": 20,
+            "weighted": 16.0
+          }
+        },
+        "2018": {
+          "GiveWell": {
+            "total": 141.0,
+            "weighted": 119.70900000000002
+          },
+          "Gates Foundation": {
+            "total": 4300,
+            "weighted": 645.0
+          },
+          "Wellcome Trust": {
+            "total": 950,
+            "weighted": 95.0
+          },
+          "Other EA": {
+            "total": 25,
+            "weighted": 20.0
+          }
+        },
+        "2019": {
+          "GiveWell": {
+            "total": 152.0,
+            "weighted": 129.048
+          },
+          "Gates Foundation": {
+            "total": 4500,
+            "weighted": 675.0
+          },
+          "Wellcome Trust": {
+            "total": 1000,
+            "weighted": 100.0
+          },
+          "Other EA": {
+            "total": 30,
+            "weighted": 24.0
+          }
+        },
+        "2020": {
+          "GiveWell": {
+            "total": 244.0,
+            "weighted": 207.15600000000003
+          },
+          "Gates Foundation": {
+            "total": 5000,
+            "weighted": 750.0
+          },
+          "Wellcome Trust": {
+            "total": 1100,
+            "weighted": 110.0
+          },
+          "Other EA": {
+            "total": 40,
+            "weighted": 32.0
+          }
+        },
+        "2021": {
+          "GiveWell": {
+            "total": 500.0,
+            "weighted": 424.50000000000006
+          },
+          "Gates Foundation": {
+            "total": 5500,
+            "weighted": 825.0
+          },
+          "Wellcome Trust": {
+            "total": 1200,
+            "weighted": 120.0
+          },
+          "Other EA": {
+            "total": 50,
+            "weighted": 40.0
+          }
+        },
+        "2022": {
+          "GiveWell": {
+            "total": 600.0,
+            "weighted": 509.40000000000003
+          },
+          "Gates Foundation": {
+            "total": 6000,
+            "weighted": 900.0
+          },
+          "Wellcome Trust": {
+            "total": 1250,
+            "weighted": 125.0
+          },
+          "Other EA": {
+            "total": 55,
+            "weighted": 44.0
+          }
+        },
+        "2023": {
+          "GiveWell": {
+            "total": 197.0,
+            "weighted": 167.25300000000001
+          },
+          "Gates Foundation": {
+            "total": 6500,
+            "weighted": 975.0
+          },
+          "Wellcome Trust": {
+            "total": 1300,
+            "weighted": 130.0
+          },
+          "Other EA": {
+            "total": 60,
+            "weighted": 48.0
+          }
+        },
+        "2024": {
+          "GiveWell": {
+            "total": 397.0,
+            "weighted": 337.05300000000005
+          },
+          "Gates Foundation": {
+            "total": 7000,
+            "weighted": 1050.0
+          },
+          "Wellcome Trust": {
+            "total": 1350,
+            "weighted": 135.0
+          },
+          "Other EA": {
+            "total": 65,
+            "weighted": 52.0
+          }
+        }
+      }
+    },
+    "animal_welfare": {
+      "total": {
+        "2015": 5001.0,
+        "2016": 5215.9,
+        "2017": 5430.6,
+        "2018": 5631.5,
+        "2019": 5844.65,
+        "2020": 6031.2,
+        "2021": 6231.6,
+        "2022": 6444.5,
+        "2023": 6649.5,
+        "2024": 6855.15
+      },
+      "weighted": {
+        "2015": 100.85,
+        "2016": 118.235,
+        "2017": 135.465,
+        "2018": 140.275,
+        "2019": 156.0975,
+        "2020": 147.98,
+        "2021": 152.34,
+        "2022": 167.975,
+        "2023": 176.425,
+        "2024": 185.5275
+      },
+      "components": {
+        "2015": {
+          "Open Philanthropy": {
+            "total": 0,
+            "weighted": 0.0
+          },
+          "EA Animal Fund": {
+            "total": 0,
+            "weighted": 0.0
+          },
+          "ACE Influenced": {
+            "total": 1.0,
+            "weighted": 0.85
+          },
+          "Traditional (HSUS, etc.)": {
+            "total": 5000,
+            "weighted": 100.0
+          },
+          "Effective Total (excl traditional)": {
+            "total": 1.0,
+            "weighted": 0.85
+          }
+        },
+        "2016": {
+          "Open Philanthropy": {
+            "total": 14.4,
+            "weighted": 12.96
+          },
+          "EA Animal Fund": {
+            "total": 0,
+            "weighted": 0.0
+          },
+          "ACE Influenced": {
+            "total": 1.5,
+            "weighted": 1.275
+          },
+          "Traditional (HSUS, etc.)": {
+            "total": 5200,
+            "weighted": 104.0
+          },
+          "Effective Total (excl traditional)": {
+            "total": 15.9,
+            "weighted": 14.235000000000001
+          }
+        },
+        "2017": {
+          "Open Philanthropy": {
+            "total": 28.1,
+            "weighted": 25.290000000000003
+          },
+          "EA Animal Fund": {
+            "total": 0.5,
+            "weighted": 0.475
+          },
+          "ACE Influenced": {
+            "total": 2.0,
+            "weighted": 1.7
+          },
+          "Traditional (HSUS, etc.)": {
+            "total": 5400,
+            "weighted": 108.0
+          },
+          "Effective Total (excl traditional)": {
+            "total": 30.6,
+            "weighted": 27.465000000000003
+          }
+        },
+        "2018": {
+          "Open Philanthropy": {
+            "total": 28.0,
+            "weighted": 25.2
+          },
+          "EA Animal Fund": {
+            "total": 1.0,
+            "weighted": 0.95
+          },
+          "ACE Influenced": {
+            "total": 2.5,
+            "weighted": 2.125
+          },
+          "Traditional (HSUS, etc.)": {
+            "total": 5600,
+            "weighted": 112.0
+          },
+          "Effective Total (excl traditional)": {
+            "total": 31.5,
+            "weighted": 28.275
+          }
+        },
+        "2019": {
+          "Open Philanthropy": {
+            "total": 39.9,
+            "weighted": 35.91
+          },
+          "EA Animal Fund": {
+            "total": 1.5,
+            "weighted": 1.4249999999999998
+          },
+          "ACE Influenced": {
+            "total": 3.25,
+            "weighted": 2.7624999999999997
+          },
+          "Traditional (HSUS, etc.)": {
+            "total": 5800,
+            "weighted": 116.0
+          },
+          "Effective Total (excl traditional)": {
+            "total": 44.65,
+            "weighted": 40.0975
+          }
+        },
+        "2020": {
+          "Open Philanthropy": {
+            "total": 25.2,
+            "weighted": 22.68
+          },
+          "EA Animal Fund": {
+            "total": 2.0,
+            "weighted": 1.9
+          },
+          "ACE Influenced": {
+            "total": 4.0,
+            "weighted": 3.4
+          },
+          "Traditional (HSUS, etc.)": {
+            "total": 6000,
+            "weighted": 120.0
+          },
+          "Effective Total (excl traditional)": {
+            "total": 31.2,
+            "weighted": 27.979999999999997
+          }
+        },
+        "2021": {
+          "Open Philanthropy": {
+            "total": 23.6,
+            "weighted": 21.240000000000002
+          },
+          "EA Animal Fund": {
+            "total": 3.0,
+            "weighted": 2.8499999999999996
+          },
+          "ACE Influenced": {
+            "total": 5.0,
+            "weighted": 4.25
+          },
+          "Traditional (HSUS, etc.)": {
+            "total": 6200,
+            "weighted": 124.0
+          },
+          "Effective Total (excl traditional)": {
+            "total": 31.6,
+            "weighted": 28.340000000000003
+          }
+        },
+        "2022": {
+          "Open Philanthropy": {
+            "total": 35.0,
+            "weighted": 31.5
+          },
+          "EA Animal Fund": {
+            "total": 4.0,
+            "weighted": 3.8
+          },
+          "ACE Influenced": {
+            "total": 5.5,
+            "weighted": 4.675
+          },
+          "Traditional (HSUS, etc.)": {
+            "total": 6400,
+            "weighted": 128.0
+          },
+          "Effective Total (excl traditional)": {
+            "total": 44.5,
+            "weighted": 39.974999999999994
+          }
+        },
+        "2023": {
+          "Open Philanthropy": {
+            "total": 40.0,
+            "weighted": 36.0
+          },
+          "EA Animal Fund": {
+            "total": 3.5,
+            "weighted": 3.3249999999999997
+          },
+          "ACE Influenced": {
+            "total": 6.0,
+            "weighted": 5.1
+          },
+          "Traditional (HSUS, etc.)": {
+            "total": 6600,
+            "weighted": 132.0
+          },
+          "Effective Total (excl traditional)": {
+            "total": 49.5,
+            "weighted": 44.425000000000004
+          }
+        },
+        "2024": {
+          "Open Philanthropy": {
+            "total": 45.0,
+            "weighted": 40.5
+          },
+          "EA Animal Fund": {
+            "total": 4.0,
+            "weighted": 3.8
+          },
+          "ACE Influenced": {
+            "total": 6.15,
+            "weighted": 5.2275
+          },
+          "Traditional (HSUS, etc.)": {
+            "total": 6800,
+            "weighted": 136.0
+          },
+          "Effective Total (excl traditional)": {
+            "total": 55.15,
+            "weighted": 49.527499999999996
+          }
+        }
+      }
+    },
+    "existential_risk": {
+      "total": {
+        "2015": 8.5,
+        "2016": 18.5,
+        "2017": 82.1,
+        "2018": 33.81,
+        "2019": 42.35,
+        "2020": 49.1,
+        "2021": 119.0,
+        "2022": 157.0,
+        "2023": 185.71,
+        "2024": 259.28
+      },
+      "weighted": {
+        "2015": 5.835,
+        "2016": 14.465,
+        "2017": 69.63000000000001,
+        "2018": 24.993,
+        "2019": 33.7,
+        "2020": 38.88999999999999,
+        "2021": 100.53500000000001,
+        "2022": 126.75,
+        "2023": 147.07,
+        "2024": 201.82
+      },
+      "components": {
+        "2015": {
+          "Open Phil AI Safety": {
+            "total": 1.2,
+            "weighted": 1.08
+          },
+          "Open Phil Biosecurity": {
+            "total": 0.3,
+            "weighted": 0.255
+          },
+          "Open Phil GCR": {
+            "total": 0,
+            "weighted": 0.0
+          },
+          "Survival & Flourishing Fund": {
+            "total": 0.0,
+            "weighted": 0.0
+          },
+          "Long-Term Future Fund": {
+            "total": 0,
+            "weighted": 0.0
+          },
+          "FTX Future Fund": {
+            "total": 0,
+            "weighted": 0.0
+          },
+          "Future of Life Institute": {
+            "total": 5.0,
+            "weighted": 3.5
+          },
+          "Other X-Risk": {
+            "total": 2.0,
+            "weighted": 1.0
+          }
+        },
+        "2016": {
+          "Open Phil AI Safety": {
+            "total": 6.6,
+            "weighted": 5.9399999999999995
+          },
+          "Open Phil Biosecurity": {
+            "total": 5.3,
+            "weighted": 4.505
+          },
+          "Open Phil GCR": {
+            "total": 0.6,
+            "weighted": 0.42
+          },
+          "Survival & Flourishing Fund": {
+            "total": 0.0,
+            "weighted": 0.0
+          },
+          "Long-Term Future Fund": {
+            "total": 0,
+            "weighted": 0.0
+          },
+          "FTX Future Fund": {
+            "total": 0,
+            "weighted": 0.0
+          },
+          "Future of Life Institute": {
+            "total": 3.0,
+            "weighted": 2.0999999999999996
+          },
+          "Other X-Risk": {
+            "total": 3.0,
+            "weighted": 1.5
+          }
+        },
+        "2017": {
+          "Open Phil AI Safety": {
+            "total": 43.2,
+            "weighted": 38.88
+          },
+          "Open Phil Biosecurity": {
+            "total": 28.8,
+            "weighted": 24.48
+          },
+          "Open Phil GCR": {
+            "total": 4.1,
+            "weighted": 2.8699999999999997
+          },
+          "Survival & Flourishing Fund": {
+            "total": 0.0,
+            "weighted": 0.0
+          },
+          "Long-Term Future Fund": {
+            "total": 0,
+            "weighted": 0.0
+          },
+          "FTX Future Fund": {
+            "total": 0,
+            "weighted": 0.0
+          },
+          "Future of Life Institute": {
+            "total": 2.0,
+            "weighted": 1.4
+          },
+          "Other X-Risk": {
+            "total": 4.0,
+            "weighted": 2.0
+          }
+        },
+        "2018": {
+          "Open Phil AI Safety": {
+            "total": 4.2,
+            "weighted": 3.7800000000000002
+          },
+          "Open Phil Biosecurity": {
+            "total": 9.9,
+            "weighted": 8.415000000000001
+          },
+          "Open Phil GCR": {
+            "total": 12.7,
+            "weighted": 8.889999999999999
+          },
+          "Survival & Flourishing Fund": {
+            "total": 0.0,
+            "weighted": 0.0
+          },
+          "Long-Term Future Fund": {
+            "total": 0.01,
+            "weighted": 0.008
+          },
+          "FTX Future Fund": {
+            "total": 0,
+            "weighted": 0.0
+          },
+          "Future of Life Institute": {
+            "total": 2.0,
+            "weighted": 1.4
+          },
+          "Other X-Risk": {
+            "total": 5.0,
+            "weighted": 2.5
+          }
+        },
+        "2019": {
+          "Open Phil AI Safety": {
+            "total": 8.2,
+            "weighted": 7.38
+          },
+          "Open Phil Biosecurity": {
+            "total": 21.6,
+            "weighted": 18.36
+          },
+          "Open Phil GCR": {
+            "total": 0.6,
+            "weighted": 0.42
+          },
+          "Survival & Flourishing Fund": {
+            "total": 1.6,
+            "weighted": 1.36
+          },
+          "Long-Term Future Fund": {
+            "total": 1.35,
+            "weighted": 1.08
+          },
+          "FTX Future Fund": {
+            "total": 0,
+            "weighted": 0.0
+          },
+          "Future of Life Institute": {
+            "total": 3.0,
+            "weighted": 2.0999999999999996
+          },
+          "Other X-Risk": {
+            "total": 6.0,
+            "weighted": 3.0
+          }
+        },
+        "2020": {
+          "Open Phil AI Safety": {
+            "total": 15.6,
+            "weighted": 14.04
+          },
+          "Open Phil Biosecurity": {
+            "total": 15.0,
+            "weighted": 12.75
+          },
+          "Open Phil GCR": {
+            "total": 1.0,
+            "weighted": 0.7
+          },
+          "Survival & Flourishing Fund": {
+            "total": 4.0,
+            "weighted": 3.4
+          },
+          "Long-Term Future Fund": {
+            "total": 1.5,
+            "weighted": 1.2000000000000002
+          },
+          "FTX Future Fund": {
+            "total": 0,
+            "weighted": 0.0
+          },
+          "Future of Life Institute": {
+            "total": 4.0,
+            "weighted": 2.8
+          },
+          "Other X-Risk": {
+            "total": 8.0,
+            "weighted": 4.0
+          }
+        },
+        "2021": {
+          "Open Phil AI Safety": {
+            "total": 81.7,
+            "weighted": 73.53
+          },
+          "Open Phil Biosecurity": {
+            "total": 9.3,
+            "weighted": 7.905
+          },
+          "Open Phil GCR": {
+            "total": 2.0,
+            "weighted": 1.4
+          },
+          "Survival & Flourishing Fund": {
+            "total": 8.0,
+            "weighted": 6.8
+          },
+          "Long-Term Future Fund": {
+            "total": 3.0,
+            "weighted": 2.4000000000000004
+          },
+          "FTX Future Fund": {
+            "total": 0,
+            "weighted": 0.0
+          },
+          "Future of Life Institute": {
+            "total": 5.0,
+            "weighted": 3.5
+          },
+          "Other X-Risk": {
+            "total": 10.0,
+            "weighted": 5.0
+          }
+        },
+        "2022": {
+          "Open Phil AI Safety": {
+            "total": 58.0,
+            "weighted": 52.2
+          },
+          "Open Phil Biosecurity": {
+            "total": 25.0,
+            "weighted": 21.25
+          },
+          "Open Phil GCR": {
+            "total": 3.0,
+            "weighted": 2.0999999999999996
+          },
+          "Survival & Flourishing Fund": {
+            "total": 12.0,
+            "weighted": 10.2
+          },
+          "Long-Term Future Fund": {
+            "total": 5.0,
+            "weighted": 4.0
+          },
+          "FTX Future Fund": {
+            "total": 32.0,
+            "weighted": 24.0
+          },
+          "Future of Life Institute": {
+            "total": 10.0,
+            "weighted": 7.0
+          },
+          "Other X-Risk": {
+            "total": 12.0,
+            "weighted": 6.0
+          }
+        },
+        "2023": {
+          "Open Phil AI Safety": {
+            "total": 58.0,
+            "weighted": 52.2
+          },
+          "Open Phil Biosecurity": {
+            "total": 35.0,
+            "weighted": 29.75
+          },
+          "Open Phil GCR": {
+            "total": 4.0,
+            "weighted": 2.8
+          },
+          "Survival & Flourishing Fund": {
+            "total": 17.040000000000003,
+            "weighted": 14.484000000000002
+          },
+          "Long-Term Future Fund": {
+            "total": 6.67,
+            "weighted": 5.336
+          },
+          "FTX Future Fund": {
+            "total": 0,
+            "weighted": 0.0
+          },
+          "Future of Life Institute": {
+            "total": 50.0,
+            "weighted": 35.0
+          },
+          "Other X-Risk": {
+            "total": 15.0,
+            "weighted": 7.5
+          }
+        },
+        "2024": {
+          "Open Phil AI Safety": {
+            "total": 75.0,
+            "weighted": 67.5
+          },
+          "Open Phil Biosecurity": {
+            "total": 40.0,
+            "weighted": 34.0
+          },
+          "Open Phil GCR": {
+            "total": 5.0,
+            "weighted": 3.5
+          },
+          "Survival & Flourishing Fund": {
+            "total": 15.92,
+            "weighted": 13.532
+          },
+          "Long-Term Future Fund": {
+            "total": 5.36,
+            "weighted": 4.288
+          },
+          "FTX Future Fund": {
+            "total": 0,
+            "weighted": 0.0
+          },
+          "Future of Life Institute": {
+            "total": 100.0,
+            "weighted": 70.0
+          },
+          "Other X-Risk": {
+            "total": 18.0,
+            "weighted": 9.0
+          }
+        }
+      }
+    }
+  }
+}
