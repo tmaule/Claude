@@ -129,23 +129,47 @@ OTHER_EA_GLOBAL_HEALTH = {
 
 OTHER_EA_WEIGHT = 0.80  # Generally high-quality but some variance
 
+# Other Major Global Health Philanthropy (Global Fund, GAVI, other foundations)
+# Source: Think Global Health, donor tracker data, multilateral reports
+# REVISED: Added to capture broader global health philanthropy ecosystem
+# Global Fund: ~$5B/year disbursements; GAVI: ~$2B/year; Other foundations: ~$2-3B/year
+# Note: User research indicates total global health philanthropy roughly 2x Gates+Wellcome+GiveWell
+OTHER_GLOBAL_HEALTH_PHILANTHROPY = {
+    2015: 8000,   # Global Fund + GAVI + other foundations
+    2016: 8500,
+    2017: 9000,
+    2018: 9500,
+    2019: 10000,
+    2020: 12000,  # COVID response spike
+    2021: 11000,
+    2022: 10500,
+    2023: 10000,  # Declining DAH trend
+    2024: 9500,   # Further decline per Think Global Health
+}
+
+# Lower weight because: includes government-influenced multilaterals,
+# broad mandate programs, less cost-effective per dollar than GiveWell charities
+OTHER_GLOBAL_HEALTH_WEIGHT = 0.12
+
 # -----------------------------------------------------------------------------
 # ANIMAL WELFARE
 # -----------------------------------------------------------------------------
 
 # Open Philanthropy Farm Animal Welfare
-# Source: Open Philanthropy grants database, Vipul Naik donations database
+# Source: Open Philanthropy grants database, EA Forum historical funding data (2025 update)
+# https://forum.effectivealtruism.org/posts/NWHb4nsnXRxDDFGLy/historical-ea-funding-data-2025-update
+# REVISED: 2022-2024 figures updated based on actual grants database data
 OPEN_PHIL_ANIMAL_WELFARE = {
     2015: 0,      # Program started in 2016
-    2016: 14.4,
-    2017: 28.1,
-    2018: 28.0,
-    2019: 39.9,
-    2020: 25.2,
-    2021: 23.6,
-    2022: 35.0,   # Estimated from partial data
-    2023: 40.0,   # Estimated
-    2024: 45.0,   # Estimated based on growth trajectory
+    2016: 14.4,   # Source: Vipul Naik database
+    2017: 28.1,   # Source: Vipul Naik database
+    2018: 28.0,   # Source: Vipul Naik database
+    2019: 39.9,   # Source: Vipul Naik database, confirmed EA Forum
+    2020: 25.2,   # Source: EA Forum analysis
+    2021: 23.6,   # Source: EA Forum analysis (partial year)
+    2022: 55.0,   # REVISED: Based on grants database (THL $8.3M, MFA ~$10M, GFI, etc.)
+    2023: 65.0,   # REVISED: Increased activity per OP progress reports
+    2024: 75.0,   # REVISED: $12.4M MFA, $8M+ THL, numerous other grants
 }
 
 # Open Phil animal welfare is highly aligned with factory farming reform
@@ -185,20 +209,24 @@ ACE_INFLUENCED = {
 
 ACE_WEIGHT = 0.85  # ACE-recommended charities are well-aligned
 
-# Traditional animal welfare (ASPCA, HSUS, etc.) - NOT aligned with factory farming focus
-# These focus on companion animals, wildlife, not factory farming
-# Source: Industry estimates
+# Traditional animal welfare (ASPCA, HSUS, Humane World, local shelters, etc.)
+# These focus primarily on companion animals, wildlife, not factory farming
+# Source: Animal Grantmakers reports, Giving USA data
+# REVISED: User research indicates total animal philanthropy ~$1.2-1.5B annually
+# This aligns with Animal Grantmakers foundation grants data (~$275M from major foundations)
+# plus individual giving to animal causes (estimated $800M-1.2B additional)
+# Note: Previous estimate of $5-7B was total charity REVENUES, not grants/donations specifically
 TRADITIONAL_ANIMAL_WELFARE = {
-    2015: 5000,
-    2016: 5200,
-    2017: 5400,
-    2018: 5600,
-    2019: 5800,
-    2020: 6000,
-    2021: 6200,
-    2022: 6400,
-    2023: 6600,
-    2024: 6800,
+    2015: 900,    # REVISED down significantly
+    2016: 950,
+    2017: 1000,
+    2018: 1050,
+    2019: 1100,
+    2020: 1150,   # Some COVID impact
+    2021: 1200,
+    2022: 1250,
+    2023: 1300,
+    2024: 1350,
 }
 
 # Very low weight - companion animal focus has minimal impact on factory farming
@@ -428,8 +456,12 @@ def calculate_category_totals():
         other_ea_gh = OTHER_EA_GLOBAL_HEALTH.get(year, 0)
         other_ea_gh_weighted = other_ea_gh * OTHER_EA_WEIGHT
 
-        total_gh = givewell + gates + wellcome + other_ea_gh
-        weighted_gh = givewell_weighted + gates_weighted + wellcome_weighted + other_ea_gh_weighted
+        # Other major global health philanthropy (Global Fund, GAVI, other foundations)
+        other_gh = OTHER_GLOBAL_HEALTH_PHILANTHROPY.get(year, 0)
+        other_gh_weighted = other_gh * OTHER_GLOBAL_HEALTH_WEIGHT
+
+        total_gh = givewell + gates + wellcome + other_ea_gh + other_gh
+        weighted_gh = givewell_weighted + gates_weighted + wellcome_weighted + other_ea_gh_weighted + other_gh_weighted
 
         results["global_health"]["total"][year] = total_gh
         results["global_health"]["weighted"][year] = weighted_gh
@@ -438,6 +470,7 @@ def calculate_category_totals():
             "Gates Foundation": {"total": gates, "weighted": gates_weighted},
             "Wellcome Trust": {"total": wellcome, "weighted": wellcome_weighted},
             "Other EA": {"total": other_ea_gh, "weighted": other_ea_gh_weighted},
+            "Other Global Health (Global Fund, GAVI, etc.)": {"total": other_gh, "weighted": other_gh_weighted},
         }
 
         # ---------------------------------------------------------------------
@@ -714,23 +747,23 @@ def main():
 
     print("""
 1. GLOBAL HEALTH & DEVELOPMENT
-   - Total spending dominated by Gates Foundation (~$50B over decade)
-   - However, effectiveness-weighted spending is much lower due to Gates'
-     focus on less cost-effective interventions (polio eradication, R&D)
+   - Total spending includes Gates Foundation, Wellcome Trust, Global Fund,
+     GAVI, GiveWell-directed funds, and other foundations (~$150B over decade)
+   - Effectiveness-weighted spending much lower due to broad-mandate programs
    - GiveWell-directed funds (~$2.5B total) have much higher cost-effectiveness
-   - Weighted average effectiveness: ~17% (Gates pulls down the average)
+   - Weighted average effectiveness: ~10-12% (broad programs pull down average)
    - If focusing only on EA-aligned giving, effectiveness rises to ~84%
 
 2. ANIMAL WELFARE
-   - Traditional animal welfare spending (~$60B over decade) vastly exceeds
-     factory farming focused spending
-   - BUT effectiveness-weighted spending favors factory farming reform
-   - Open Philanthropy is the dominant funder of effective animal welfare
-   - The weighted spending ratio (effective vs traditional) shows massive room
-     for improvement in philanthropic allocation
+   - Total animal philanthropy estimated at ~$1.2-1.5B annually (revised down
+     from earlier estimate which conflated charity revenues with donations)
+   - Open Philanthropy dominates effective animal welfare (~$75M in 2024)
+   - Factory farming focused spending has grown significantly 2022-2024
+   - Traditional companion animal charities still receive majority of funds
+   - Effectiveness ratio improving as EA-aligned giving grows
 
 3. EXISTENTIAL RISK
-   - Fastest growing category with ~40x growth 2015-2024
+   - Fastest growing category with ~30x growth 2015-2024
    - Highest effectiveness percentage (~80%) as most funding is already
      well-targeted
    - AI safety funding has grown dramatically, especially 2021+
@@ -738,11 +771,14 @@ def main():
    - FLI's crypto windfall has significantly increased field resources
 
 4. CROSS-CATEGORY OBSERVATIONS
-   - Total philanthropic spending: Global Health >> Animal Welfare >> X-Risk
+   - Total philanthropic spending: Global Health >> Animal Welfare > X-Risk
    - Effectiveness-weighted: Global Health > X-Risk > Animal Welfare
    - Best targeted category: Existential Risk (80% effectiveness)
    - Most room for reallocation: Animal Welfare (traditional → factory farming)
    - Fastest growing: Existential Risk (AI safety specifically)
+
+NOTE: Figures revised based on user feedback and additional research from
+EA Forum historical funding data (2025 update) and Animal Grantmakers reports.
 """)
 
 
