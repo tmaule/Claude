@@ -11,28 +11,28 @@
   "data": {
     "global_health": {
       "total": {
-        "2015": 4720.1,
-        "2016": 4953.6,
-        "2017": 5237.5,
-        "2018": 5416.0,
-        "2019": 5682.0,
-        "2020": 6384.0,
-        "2021": 7250.0,
-        "2022": 7905.0,
-        "2023": 8057.0,
-        "2024": 8812.0
+        "2015": 12720.1,
+        "2016": 13453.6,
+        "2017": 14237.5,
+        "2018": 14916.0,
+        "2019": 15682.0,
+        "2020": 18384.0,
+        "2021": 18250.0,
+        "2022": 18405.0,
+        "2023": 18057.0,
+        "2024": 18312.0
       },
       "weighted": {
-        "2015": 751.4749,
-        "2016": 772.2214,
-        "2017": 835.7575,
-        "2018": 879.7090000000001,
-        "2019": 928.048,
-        "2020": 1099.156,
-        "2021": 1409.5,
-        "2022": 1578.4,
-        "2023": 1320.253,
-        "2024": 1574.053
+        "2015": 1711.4749000000002,
+        "2016": 1792.2214,
+        "2017": 1915.7575000000002,
+        "2018": 2019.709,
+        "2019": 2128.048,
+        "2020": 2539.156,
+        "2021": 2729.5,
+        "2022": 2838.4,
+        "2023": 2520.2529999999997,
+        "2024": 2714.053
       },
       "components": {
         "2015": {
@@ -51,6 +51,10 @@
           "Other EA": {
             "total": 10,
             "weighted": 8.0
+          },
+          "Other Global Health (Global Fund, GAVI, etc.)": {
+            "total": 8000,
+            "weighted": 960.0
           }
         },
         "2016": {
@@ -69,6 +73,10 @@
           "Other EA": {
             "total": 15,
             "weighted": 12.0
+          },
+          "Other Global Health (Global Fund, GAVI, etc.)": {
+            "total": 8500,
+            "weighted": 1020.0
           }
         },
         "2017": {
@@ -87,6 +95,10 @@
           "Other EA": {
             "total": 20,
             "weighted": 16.0
+          },
+          "Other Global Health (Global Fund, GAVI, etc.)": {
+            "total": 9000,
+            "weighted": 1080.0
           }
         },
         "2018": {
@@ -105,6 +117,10 @@
           "Other EA": {
             "total": 25,
             "weighted": 20.0
+          },
+          "Other Global Health (Global Fund, GAVI, etc.)": {
+            "total": 9500,
+            "weighted": 1140.0
           }
         },
         "2019": {
@@ -123,6 +139,10 @@
           "Other EA": {
             "total": 30,
             "weighted": 24.0
+          },
+          "Other Global Health (Global Fund, GAVI, etc.)": {
+            "total": 10000,
+            "weighted": 1200.0
           }
         },
         "2020": {
@@ -141,6 +161,10 @@
           "Other EA": {
             "total": 40,
             "weighted": 32.0
+          },
+          "Other Global Health (Global Fund, GAVI, etc.)": {
+            "total": 12000,
+            "weighted": 1440.0
           }
         },
         "2021": {
@@ -159,6 +183,10 @@
           "Other EA": {
             "total": 50,
             "weighted": 40.0
+          },
+          "Other Global Health (Global Fund, GAVI, etc.)": {
+            "total": 11000,
+            "weighted": 1320.0
           }
         },
         "2022": {
@@ -177,6 +205,10 @@
           "Other EA": {
             "total": 55,
             "weighted": 44.0
+          },
+          "Other Global Health (Global Fund, GAVI, etc.)": {
+            "total": 10500,
+            "weighted": 1260.0
           }
         },
         "2023": {
@@ -195,6 +227,10 @@
           "Other EA": {
             "total": 60,
             "weighted": 48.0
+          },
+          "Other Global Health (Global Fund, GAVI, etc.)": {
+            "total": 10000,
+            "weighted": 1200.0
           }
         },
         "2024": {
@@ -213,34 +249,38 @@
           "Other EA": {
             "total": 65,
             "weighted": 52.0
+          },
+          "Other Global Health (Global Fund, GAVI, etc.)": {
+            "total": 9500,
+            "weighted": 1140.0
           }
         }
       }
     },
     "animal_welfare": {
       "total": {
-        "2015": 5001.0,
-        "2016": 5215.9,
-        "2017": 5430.6,
-        "2018": 5631.5,
-        "2019": 5844.65,
-        "2020": 6031.2,
-        "2021": 6231.6,
-        "2022": 6444.5,
-        "2023": 6649.5,
-        "2024": 6855.15
+        "2015": 901.0,
+        "2016": 965.9,
+        "2017": 1030.6,
+        "2018": 1081.5,
+        "2019": 1144.65,
+        "2020": 1181.2,
+        "2021": 1231.6,
+        "2022": 1314.5,
+        "2023": 1374.5,
+        "2024": 1435.15
       },
       "weighted": {
-        "2015": 100.85,
-        "2016": 118.235,
-        "2017": 135.465,
-        "2018": 140.275,
-        "2019": 156.0975,
-        "2020": 147.98,
-        "2021": 152.34,
-        "2022": 167.975,
-        "2023": 176.425,
-        "2024": 185.5275
+        "2015": 18.85,
+        "2016": 33.235,
+        "2017": 47.465,
+        "2018": 49.275,
+        "2019": 62.0975,
+        "2020": 50.98,
+        "2021": 52.34,
+        "2022": 82.975,
+        "2023": 92.925,
+        "2024": 103.5275
       },
       "components": {
         "2015": {
@@ -257,8 +297,8 @@
             "weighted": 0.85
           },
           "Traditional (HSUS, etc.)": {
-            "total": 5000,
-            "weighted": 100.0
+            "total": 900,
+            "weighted": 18.0
           },
           "Effective Total (excl traditional)": {
             "total": 1.0,
@@ -279,8 +319,8 @@
             "weighted": 1.275
           },
           "Traditional (HSUS, etc.)": {
-            "total": 5200,
-            "weighted": 104.0
+            "total": 950,
+            "weighted": 19.0
           },
           "Effective Total (excl traditional)": {
             "total": 15.9,
@@ -301,8 +341,8 @@
             "weighted": 1.7
           },
           "Traditional (HSUS, etc.)": {
-            "total": 5400,
-            "weighted": 108.0
+            "total": 1000,
+            "weighted": 20.0
           },
           "Effective Total (excl traditional)": {
             "total": 30.6,
@@ -323,8 +363,8 @@
             "weighted": 2.125
           },
           "Traditional (HSUS, etc.)": {
-            "total": 5600,
-            "weighted": 112.0
+            "total": 1050,
+            "weighted": 21.0
           },
           "Effective Total (excl traditional)": {
             "total": 31.5,
@@ -345,8 +385,8 @@
             "weighted": 2.7624999999999997
           },
           "Traditional (HSUS, etc.)": {
-            "total": 5800,
-            "weighted": 116.0
+            "total": 1100,
+            "weighted": 22.0
           },
           "Effective Total (excl traditional)": {
             "total": 44.65,
@@ -367,8 +407,8 @@
             "weighted": 3.4
           },
           "Traditional (HSUS, etc.)": {
-            "total": 6000,
-            "weighted": 120.0
+            "total": 1150,
+            "weighted": 23.0
           },
           "Effective Total (excl traditional)": {
             "total": 31.2,
@@ -389,8 +429,8 @@
             "weighted": 4.25
           },
           "Traditional (HSUS, etc.)": {
-            "total": 6200,
-            "weighted": 124.0
+            "total": 1200,
+            "weighted": 24.0
           },
           "Effective Total (excl traditional)": {
             "total": 31.6,
@@ -399,8 +439,8 @@
         },
         "2022": {
           "Open Philanthropy": {
-            "total": 35.0,
-            "weighted": 31.5
+            "total": 55.0,
+            "weighted": 49.5
           },
           "EA Animal Fund": {
             "total": 4.0,
@@ -411,18 +451,18 @@
             "weighted": 4.675
           },
           "Traditional (HSUS, etc.)": {
-            "total": 6400,
-            "weighted": 128.0
+            "total": 1250,
+            "weighted": 25.0
           },
           "Effective Total (excl traditional)": {
-            "total": 44.5,
-            "weighted": 39.974999999999994
+            "total": 64.5,
+            "weighted": 57.974999999999994
           }
         },
         "2023": {
           "Open Philanthropy": {
-            "total": 40.0,
-            "weighted": 36.0
+            "total": 65.0,
+            "weighted": 58.5
           },
           "EA Animal Fund": {
             "total": 3.5,
@@ -433,18 +473,18 @@
             "weighted": 5.1
           },
           "Traditional (HSUS, etc.)": {
-            "total": 6600,
-            "weighted": 132.0
+            "total": 1300,
+            "weighted": 26.0
           },
           "Effective Total (excl traditional)": {
-            "total": 49.5,
-            "weighted": 44.425000000000004
+            "total": 74.5,
+            "weighted": 66.925
           }
         },
         "2024": {
           "Open Philanthropy": {
-            "total": 45.0,
-            "weighted": 40.5
+            "total": 75.0,
+            "weighted": 67.5
           },
           "EA Animal Fund": {
             "total": 4.0,
@@ -455,12 +495,12 @@
             "weighted": 5.2275
           },
           "Traditional (HSUS, etc.)": {
-            "total": 6800,
-            "weighted": 136.0
+            "total": 1350,
+            "weighted": 27.0
           },
           "Effective Total (excl traditional)": {
-            "total": 55.15,
-            "weighted": 49.527499999999996
+            "total": 85.15,
+            "weighted": 76.5275
           }
         }
       }
