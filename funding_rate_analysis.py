@@ -4,22 +4,21 @@ Inverse Perpetual Funding Rate Analysis
 Analyzes funding rate data for inverse (coin-margined) perpetual contracts
 on Binance, OKX, and Bybit for BTC, ETH, XRP, and DOGE.
 
-Data sources:
-  - Binance:  Historical data from Binance Vision S3 archive (Nov 2025 - Jan 2026)
-  - OKX:     Current snapshot from CoinGecko derivatives API
-  - Bybit:   Current snapshot from CoinGecko derivatives API
-
-Note: OKX and Bybit direct APIs were inaccessible from this environment.
-Historical data for those exchanges is therefore unavailable. Only Binance
-has full 90-day history; OKX and Bybit show current annualized rates only.
+Data fetching strategy:
+  1. Primary:  ccxt library (requires `pip install ccxt`)
+  2. Fallback: Binance S3 archive + CoinGecko snapshots for OKX/Bybit
 
 Produces:
   1. Annualized funding rate table (7d, 30d, 60d, 90d horizons)
-  2. Rolling 24h funding rate chart over 90 days (Binance only)
+  2. Rolling 24h funding rate charts over 90 days
+
+Usage:
+  pip install ccxt pandas matplotlib requests
+  python funding_rate_analysis.py
 """
 
 import glob
-import json
+import time
 import requests
 import pandas as pd
 import numpy as np
@@ -28,32 +27,120 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.ticker as mticker
-import matplotlib.colors as mcolors
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+try:
+    import ccxt
+    CCXT_AVAILABLE = True
+except ImportError:
+    CCXT_AVAILABLE = False
 
 # ── Configuration ──────────────────────────────────────────────────────────
 
 COINS = ["BTC", "ETH", "XRP", "DOGE"]
 EXCHANGES = ["Binance", "OKX", "Bybit"]
 
+# Inverse perp symbol mappings — exchange-native names (for display / S3 fallback)
 SYMBOLS = {
     "Binance": {"BTC": "BTCUSD_PERP", "ETH": "ETHUSD_PERP", "XRP": "XRPUSD_PERP", "DOGE": "DOGEUSD_PERP"},
     "OKX":     {"BTC": "BTC-USD-SWAP", "ETH": "ETH-USD-SWAP", "XRP": "XRP-USD-SWAP", "DOGE": "DOGE-USD-SWAP"},
     "Bybit":   {"BTC": "BTCUSD",       "ETH": "ETHUSD",       "XRP": "XRPUSD",       "DOGE": "DOGEUSD"},
 }
 
-DATA_DIR = "/home/user/Claude/funding_data/binance"
+# ccxt unified symbol format for inverse perps: BASE/USD:BASE
+CCXT_SYMBOLS = {
+    "BTC":  "BTC/USD:BTC",
+    "ETH":  "ETH/USD:ETH",
+    "XRP":  "XRP/USD:XRP",
+    "DOGE": "DOGE/USD:DOGE",
+}
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+DATA_DIR = SCRIPT_DIR / "funding_data" / "binance"
 LOOKBACK_DAYS = 90
 PERIODS_PER_DAY = 3   # 8h funding intervals
 NOW = datetime.now(timezone.utc)
 
 
-# ── Data Loading ───────────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════
+# PRIMARY: ccxt-based data fetching
+# ══════════════════════════════════════════════════════════════════════════
+
+def _create_exchange(name: str):
+    """Instantiate a ccxt exchange object."""
+    cls_map = {"Binance": ccxt.binance, "OKX": ccxt.okx, "Bybit": ccxt.bybit}
+    exchange = cls_map[name]({"enableRateLimit": True})
+    # Binance coin-margined futures require the 'delivery' (dapi) option
+    if name == "Binance":
+        exchange.options["defaultType"] = "delivery"
+    return exchange
+
+
+def fetch_funding_ccxt(exchange_name: str, coin: str) -> pd.DataFrame:
+    """Fetch 90 days of funding rate history via ccxt."""
+    exchange = _create_exchange(exchange_name)
+    symbol = CCXT_SYMBOLS[coin]
+    since_ms = int((NOW - timedelta(days=LOOKBACK_DAYS)).timestamp() * 1000)
+    end_ms = int(NOW.timestamp() * 1000)
+
+    all_rows = []
+    cursor = since_ms
+
+    while cursor < end_ms:
+        try:
+            batch = exchange.fetch_funding_rate_history(symbol, since=cursor, limit=200)
+        except Exception as e:
+            print(f"    ccxt error at cursor {cursor}: {e}")
+            break
+
+        if not batch:
+            break
+
+        all_rows.extend(batch)
+        last_ts = batch[-1]["timestamp"]
+        if last_ts <= cursor:
+            break
+        cursor = last_ts + 1
+        time.sleep(exchange.rateLimit / 1000)
+
+    if not all_rows:
+        return pd.DataFrame(columns=["timestamp", "rate"])
+
+    df = pd.DataFrame(all_rows)
+    df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms", utc=True)
+    df["rate"] = df["fundingRate"].astype(float)
+    cutoff = NOW - timedelta(days=LOOKBACK_DAYS)
+    df = df[df["timestamp"] >= cutoff]
+    return df[["timestamp", "rate"]].sort_values("timestamp").drop_duplicates("timestamp").reset_index(drop=True)
+
+
+def fetch_all_ccxt() -> dict:
+    """Attempt to fetch all 12 contracts via ccxt. Returns nested dict."""
+    data = {}
+    for exchange_name in EXCHANGES:
+        data[exchange_name] = {}
+        for coin in COINS:
+            label = f"{exchange_name} {SYMBOLS[exchange_name][coin]}"
+            print(f"  {label} ...", end=" ", flush=True)
+            try:
+                df = fetch_funding_ccxt(exchange_name, coin)
+                print(f"{len(df)} records", flush=True)
+            except Exception as e:
+                print(f"FAILED ({e})", flush=True)
+                df = pd.DataFrame(columns=["timestamp", "rate"])
+            data[exchange_name][coin] = df
+    return data
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# FALLBACK: Binance S3 archive + CoinGecko snapshots
+# ══════════════════════════════════════════════════════════════════════════
 
 def load_binance_csv(coin: str) -> pd.DataFrame:
     """Load Binance historical funding from downloaded S3 CSV files."""
     symbol = SYMBOLS["Binance"][coin]
-    pattern = f"{DATA_DIR}/{symbol}-fundingRate-*.csv"
+    pattern = str(DATA_DIR / f"{symbol}-fundingRate-*.csv")
     files = sorted(glob.glob(pattern))
     if not files:
         return pd.DataFrame(columns=["timestamp", "rate"])
@@ -66,20 +153,17 @@ def load_binance_csv(coin: str) -> pd.DataFrame:
         frames.append(df[["timestamp", "rate"]])
 
     combined = pd.concat(frames, ignore_index=True).sort_values("timestamp").reset_index(drop=True)
-    # Filter to lookback window
     cutoff = NOW - timedelta(days=LOOKBACK_DAYS)
     return combined[combined["timestamp"] >= cutoff].reset_index(drop=True)
 
 
 def fetch_coingecko_current_rates() -> dict:
     """Fetch current funding rate snapshots from CoinGecko derivatives API."""
-    print("  Fetching current snapshots from CoinGecko ...", flush=True)
     url = "https://api.coingecko.com/api/v3/derivatives?include_tickers=unexpired"
     resp = requests.get(url, timeout=60, headers={"Accept": "application/json"})
     resp.raise_for_status()
     data = resp.json()
 
-    # Map CoinGecko exchange names to our names
     exchange_map = {
         "Binance (Futures)": "Binance",
         "OKX (Futures)": "OKX",
@@ -98,12 +182,9 @@ def fetch_coingecko_current_rates() -> dict:
 
         if index_id not in COINS:
             continue
-
-        # Only perpetuals, not quarterly futures
         if contract_type != "perpetual":
             continue
 
-        # Identify inverse perps: USD-denominated, not USDT/USDC
         sym_upper = symbol.upper()
         is_inverse = ("USD" in sym_upper and "USDT" not in sym_upper and "USDC" not in sym_upper)
         if not is_inverse:
@@ -113,36 +194,44 @@ def fetch_coingecko_current_rates() -> dict:
         if funding is not None:
             results[key] = {
                 "symbol": symbol,
-                "funding_rate_pct": float(funding),  # CoinGecko returns as percentage
-                "rate": float(funding) / 100,          # Convert to decimal
+                "funding_rate_pct": float(funding),
+                "rate": float(funding) / 100,
             }
 
     return results
 
 
-def load_all_data() -> dict:
-    """Load all funding data. Returns nested dict[exchange][coin] -> DataFrame."""
+def fetch_all_fallback() -> tuple[dict, dict]:
+    """Fallback path: Binance S3 history + CoinGecko snapshots for OKX/Bybit."""
     data = {}
 
-    # Binance: full history from S3 archive
+    # Binance from S3 CSVs
     data["Binance"] = {}
     for coin in COINS:
         df = load_binance_csv(coin)
-        print(f"  Binance {coin}: {len(df)} records "
-              f"({df['timestamp'].min().strftime('%Y-%m-%d') if len(df) else 'N/A'} to "
-              f"{df['timestamp'].max().strftime('%Y-%m-%d') if len(df) else 'N/A'})")
+        rng = (f"{df['timestamp'].min():%Y-%m-%d} to {df['timestamp'].max():%Y-%m-%d}"
+               if len(df) else "N/A")
+        print(f"  Binance {SYMBOLS['Binance'][coin]:15s} {len(df):4d} records  ({rng})")
         data["Binance"][coin] = df
 
-    # OKX and Bybit: empty history (APIs blocked), will use current snapshots for table
-    for exchange in ["OKX", "Bybit"]:
-        data[exchange] = {}
-        for coin in COINS:
-            data[exchange][coin] = pd.DataFrame(columns=["timestamp", "rate"])
+    # OKX / Bybit: empty (will use snapshots in table)
+    for ex in ["OKX", "Bybit"]:
+        data[ex] = {coin: pd.DataFrame(columns=["timestamp", "rate"]) for coin in COINS}
 
-    return data
+    # CoinGecko snapshots
+    print("  Fetching CoinGecko snapshots ...", flush=True)
+    current_rates = fetch_coingecko_current_rates()
+    for (ex, coin), info in sorted(current_rates.items()):
+        ann = info["rate"] * PERIODS_PER_DAY * 365 * 100
+        print(f"    {ex:8s} {coin:5s} {info['symbol']:15s} "
+              f"rate={info['funding_rate_pct']:+.6f}%  ann={ann:+.2f}%")
+
+    return data, current_rates
 
 
-# ── Analysis ───────────────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════
+# Analysis
+# ══════════════════════════════════════════════════════════════════════════
 
 def annualized_rate(df: pd.DataFrame, days: int) -> float | None:
     """Compute annualized funding rate over the most recent `days`."""
@@ -153,11 +242,15 @@ def annualized_rate(df: pd.DataFrame, days: int) -> float | None:
     if len(subset) < 3:
         return None
     avg_per_period = subset["rate"].mean()
-    return avg_per_period * PERIODS_PER_DAY * 365 * 100  # as percentage
+    return avg_per_period * PERIODS_PER_DAY * 365 * 100
 
 
-def build_summary_table(data: dict, current_rates: dict) -> pd.DataFrame:
-    """Build summary DataFrame with annualized funding across horizons."""
+def build_summary_table(data: dict, current_rates: dict | None = None) -> pd.DataFrame:
+    """Build summary DataFrame with annualized funding across horizons.
+
+    If current_rates is provided, exchanges with empty history will use
+    the snapshot values (marked with _snapshot=True).
+    """
     horizons = [7, 30, 60, 90]
     rows = []
 
@@ -171,24 +264,25 @@ def build_summary_table(data: dict, current_rates: dict) -> pd.DataFrame:
             }
 
             if not df.empty:
-                # Full history available (Binance)
                 row["_snapshot"] = False
                 for h in horizons:
                     row[f"{h}d Ann. %"] = annualized_rate(df, h)
-            else:
-                # Only current snapshot available (OKX, Bybit)
+            elif current_rates:
                 key = (exchange, coin)
                 snap = current_rates.get(key)
                 if snap:
-                    # Annualize the current rate: rate_per_period * 3 * 365 * 100
                     ann = snap["rate"] * PERIODS_PER_DAY * 365 * 100
-                    for h in horizons:
-                        row[f"{h}d Ann. %"] = ann  # same value across all horizons (snapshot)
                     row["_snapshot"] = True
+                    for h in horizons:
+                        row[f"{h}d Ann. %"] = ann
                 else:
                     row["_snapshot"] = False
                     for h in horizons:
                         row[f"{h}d Ann. %"] = None
+            else:
+                row["_snapshot"] = False
+                for h in horizons:
+                    row[f"{h}d Ann. %"] = None
 
             rows.append(row)
 
@@ -196,7 +290,7 @@ def build_summary_table(data: dict, current_rates: dict) -> pd.DataFrame:
 
 
 def rolling_24h_funding(df: pd.DataFrame) -> pd.DataFrame:
-    """Compute rolling 24h annualized funding (sum of 3 consecutive periods * 365)."""
+    """Compute rolling 24h annualized funding (sum of 3 consecutive 8h periods * 365)."""
     if df.empty:
         return pd.DataFrame(columns=["timestamp", "rolling_24h_ann"])
     df = df.copy().set_index("timestamp").sort_index()
@@ -204,23 +298,22 @@ def rolling_24h_funding(df: pd.DataFrame) -> pd.DataFrame:
     return df[["rolling_24h_ann"]].dropna().reset_index()
 
 
-# ── Visualization ──────────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════
+# Visualization
+# ══════════════════════════════════════════════════════════════════════════
 
 def render_table(summary: pd.DataFrame, output_path: str):
     """Render a formatted table image with conditional coloring."""
     horizons = ["7d Ann. %", "30d Ann. %", "60d Ann. %", "90d Ann. %"]
 
-    # Collect all valid values for color scaling
     all_vals = []
     for h in horizons:
         all_vals.extend(summary[h].dropna().tolist())
     if not all_vals:
-        print("No data to render table.")
+        print("  No data to render table.")
         return
 
-    vmin = min(all_vals)
-    vmax = max(all_vals)
-    abs_max = max(abs(vmin), abs(vmax), 0.01)
+    abs_max = max(abs(min(all_vals)), abs(max(all_vals)), 0.01)
 
     fig, ax = plt.subplots(figsize=(16, 7.5))
     ax.axis("off")
@@ -228,13 +321,11 @@ def render_table(summary: pd.DataFrame, output_path: str):
     col_labels = ["Exchange", "Contract"] + horizons
     cell_text = []
     cell_colors = []
-    is_snapshot_row = []
 
     for _, row in summary.iterrows():
         text_row = [row["Exchange"], row["Contract"]]
         color_row = ["#f5f5f5", "#f5f5f5"]
         is_snap = row.get("_snapshot", False)
-        is_snapshot_row.append(is_snap)
 
         for h in horizons:
             val = row[h]
@@ -247,17 +338,14 @@ def render_table(summary: pd.DataFrame, output_path: str):
                     label += "*"
                 text_row.append(label)
 
-                # Diverging color scale: green for positive, red for negative
-                norm_val = val / abs_max  # [-1, 1]
+                norm_val = val / abs_max
                 if val > 0:
-                    # Green scale - more positive = more intense green
                     intensity = min(abs(norm_val), 1.0)
                     r = int(255 - intensity * 120)
                     g = int(255 - intensity * 40)
                     b = int(255 - intensity * 120)
                     color_row.append(f"#{r:02x}{g:02x}{b:02x}")
                 elif val < 0:
-                    # Red scale - more negative = more intense red
                     intensity = min(abs(norm_val), 1.0)
                     r = int(255 - intensity * 20)
                     g = int(255 - intensity * 110)
@@ -281,7 +369,6 @@ def render_table(summary: pd.DataFrame, output_path: str):
     table.set_fontsize(10)
     table.scale(1, 1.7)
 
-    # Style header
     for j in range(len(col_labels)):
         cell = table[0, j]
         cell.set_text_props(color="white", fontweight="bold", fontsize=10.5)
@@ -298,27 +385,18 @@ def render_table(summary: pd.DataFrame, output_path: str):
             cell.set_edgecolor("#2F5496")
             cell.set_linewidth(2)
 
-    # Add alternating row shading for readability (exchange groups)
-    for i in range(len(summary)):
-        exchange = summary.iloc[i]["Exchange"]
-        if exchange == "OKX":
-            for j in range(len(col_labels)):
-                c = cell_colors[i][j]
-                # Slightly darken OKX rows for grouping
-                table[i + 1, j].set_edgecolor("#cccccc")
-
-    # Title and footnotes
     ax.set_title(
         "Inverse Perpetual Funding Rates — Annualized\n"
         "Binance | OKX | Bybit",
         fontsize=14, fontweight="bold", pad=25, loc="center"
     )
 
-    fig.text(0.5, 0.02,
-             f"Data as of {NOW.strftime('%Y-%m-%d %H:%M UTC')} | "
-             f"Binance: historical data (Nov 2025 – Jan 2026) | "
-             f"OKX & Bybit: current snapshot only (*)\n"
-             f"Positive = longs pay shorts | Annualized = avg per-period rate x 3 x 365",
+    has_snapshots = summary["_snapshot"].any() if "_snapshot" in summary.columns else False
+    footnote = f"Data as of {NOW.strftime('%Y-%m-%d %H:%M UTC')}"
+    if has_snapshots:
+        footnote += " | Values marked * are current snapshots, not historical averages"
+    footnote += "\nPositive = longs pay shorts | Annualized = avg per-period rate x 3 x 365"
+    fig.text(0.5, 0.02, footnote,
              ha="center", fontsize=8.5, color="#666666", style="italic")
 
     plt.savefig(output_path, dpi=180, bbox_inches="tight", facecolor="white")
@@ -327,69 +405,67 @@ def render_table(summary: pd.DataFrame, output_path: str):
 
 
 def render_chart(data: dict, output_path: str):
-    """Plot rolling 24h annualized funding for Binance inverse perps over 90 days."""
+    """Plot rolling 24h annualized funding per exchange x coin (2x2 per exchange)."""
     coin_colors = {"BTC": "#F7931A", "ETH": "#627EEA", "XRP": "#00AAE4", "DOGE": "#C2A633"}
 
-    fig, axes = plt.subplots(2, 2, figsize=(18, 10), sharex=True)
-    axes_flat = axes.flatten()
+    # Determine which exchanges have data
+    exchanges_with_data = [ex for ex in EXCHANGES
+                           if any(not data[ex][c].empty for c in COINS)]
 
-    for idx, coin in enumerate(COINS):
-        ax = axes_flat[idx]
-        df = data["Binance"][coin]
-        rdf = rolling_24h_funding(df)
+    if not exchanges_with_data:
+        print("  No historical data for chart.")
+        return
 
-        if not rdf.empty:
-            color = coin_colors[coin]
-            ax.fill_between(
-                rdf["timestamp"],
-                rdf["rolling_24h_ann"],
-                0,
-                where=rdf["rolling_24h_ann"] >= 0,
-                alpha=0.3, color="#2ecc71", interpolate=True
-            )
-            ax.fill_between(
-                rdf["timestamp"],
-                rdf["rolling_24h_ann"],
-                0,
-                where=rdf["rolling_24h_ann"] < 0,
-                alpha=0.3, color="#e74c3c", interpolate=True
-            )
-            ax.plot(rdf["timestamp"], rdf["rolling_24h_ann"],
-                    color=color, linewidth=1.3, alpha=0.9)
-            ax.axhline(y=0, color="gray", linewidth=0.7, linestyle="-")
+    n_ex = len(exchanges_with_data)
+    fig, axes = plt.subplots(n_ex, 4, figsize=(20, 4 * n_ex + 1),
+                             sharex=True, squeeze=False)
 
-            # Stats annotation
-            mean_val = rdf["rolling_24h_ann"].mean()
-            max_val = rdf["rolling_24h_ann"].max()
-            min_val = rdf["rolling_24h_ann"].min()
-            ax.text(0.02, 0.95,
-                    f"Mean: {mean_val:+.1f}%  Max: {max_val:+.1f}%  Min: {min_val:+.1f}%",
-                    transform=ax.transAxes, fontsize=8, verticalalignment="top",
-                    bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8))
-        else:
-            ax.text(0.5, 0.5, "No data", transform=ax.transAxes,
-                    ha="center", va="center", fontsize=14, color="gray")
+    for row_idx, exchange in enumerate(exchanges_with_data):
+        for col_idx, coin in enumerate(COINS):
+            ax = axes[row_idx][col_idx]
+            df = data[exchange][coin]
+            rdf = rolling_24h_funding(df)
 
-        ax.set_title(f"Binance {SYMBOLS['Binance'][coin]}", fontsize=12, fontweight="bold")
-        ax.set_ylabel("Annualized %", fontsize=9)
-        ax.grid(True, alpha=0.25)
-        ax.yaxis.set_major_formatter(mticker.FormatStrFormatter('%.0f%%'))
+            if not rdf.empty:
+                color = coin_colors[coin]
+                ax.fill_between(rdf["timestamp"], rdf["rolling_24h_ann"], 0,
+                                where=rdf["rolling_24h_ann"] >= 0,
+                                alpha=0.3, color="#2ecc71", interpolate=True)
+                ax.fill_between(rdf["timestamp"], rdf["rolling_24h_ann"], 0,
+                                where=rdf["rolling_24h_ann"] < 0,
+                                alpha=0.3, color="#e74c3c", interpolate=True)
+                ax.plot(rdf["timestamp"], rdf["rolling_24h_ann"],
+                        color=color, linewidth=1.2, alpha=0.9)
+                ax.axhline(y=0, color="gray", linewidth=0.5, linestyle="-")
 
-    # Format x-axis
-    for ax in axes_flat:
+                mean_val = rdf["rolling_24h_ann"].mean()
+                ax.text(0.03, 0.93, f"Avg: {mean_val:+.1f}%",
+                        transform=ax.transAxes, fontsize=7.5, verticalalignment="top",
+                        bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.8))
+            else:
+                ax.text(0.5, 0.5, "No data", transform=ax.transAxes,
+                        ha="center", va="center", fontsize=11, color="gray")
+
+            if row_idx == 0:
+                ax.set_title(f"{coin}", fontsize=11, fontweight="bold")
+            if col_idx == 0:
+                ax.set_ylabel(f"{exchange}\nAnn. %", fontsize=9)
+
+            ax.grid(True, alpha=0.2)
+            ax.yaxis.set_major_formatter(mticker.FormatStrFormatter('%.0f%%'))
+
+    for ax in axes[-1]:
         ax.xaxis.set_major_formatter(mdates.DateFormatter("%b %d"))
         ax.xaxis.set_major_locator(mdates.WeekdayLocator(interval=2))
-        plt.setp(ax.xaxis.get_majorticklabels(), rotation=30, fontsize=8)
+        plt.setp(ax.xaxis.get_majorticklabels(), rotation=30, fontsize=7.5)
 
     fig.suptitle(
-        "Rolling 24-Hour Funding Rates — Binance Inverse Perpetuals\n"
-        f"Nov 2025 – Jan 2026",
-        fontsize=14, fontweight="bold", y=1.02
+        "Rolling 24-Hour Funding Rates — Inverse Perpetuals (Annualized)",
+        fontsize=14, fontweight="bold", y=1.01
     )
-
     fig.text(0.5, -0.01,
              "Rolling 24h = sum of 3 consecutive 8h funding periods, annualized (x365) | "
-             "Green fill = positive (longs pay), Red fill = negative (shorts pay)",
+             "Green = positive (longs pay), Red = negative (shorts pay)",
              ha="center", fontsize=8.5, color="#666666", style="italic")
 
     plt.tight_layout()
@@ -399,104 +475,146 @@ def render_chart(data: dict, output_path: str):
 
 
 def render_combined_chart(data: dict, output_path: str):
-    """Overlay chart: all 4 coins on one panel for easy comparison."""
+    """One panel per exchange, all 4 coins overlaid."""
     coin_colors = {"BTC": "#F7931A", "ETH": "#627EEA", "XRP": "#00AAE4", "DOGE": "#C2A633"}
 
-    fig, ax = plt.subplots(figsize=(18, 7))
+    exchanges_with_data = [ex for ex in EXCHANGES
+                           if any(not data[ex][c].empty for c in COINS)]
+    if not exchanges_with_data:
+        print("  No historical data for combined chart.")
+        return
 
-    for coin in COINS:
-        df = data["Binance"][coin]
-        rdf = rolling_24h_funding(df)
-        if not rdf.empty:
-            ax.plot(rdf["timestamp"], rdf["rolling_24h_ann"],
-                    label=f"{coin} ({SYMBOLS['Binance'][coin]})",
-                    color=coin_colors[coin],
-                    linewidth=1.4 if coin in ("BTC", "ETH") else 1.0,
-                    alpha=0.85)
+    n = len(exchanges_with_data)
+    fig, axes = plt.subplots(n, 1, figsize=(18, 5 * n), sharex=True, squeeze=False)
 
-    ax.axhline(y=0, color="gray", linewidth=0.7, linestyle="-")
-    ax.set_ylabel("Annualized %", fontsize=11)
-    ax.set_title("Binance Inverse Perps — Rolling 24h Funding (Annualized)", fontsize=14, fontweight="bold")
-    ax.legend(loc="best", fontsize=10, framealpha=0.9)
-    ax.grid(True, alpha=0.25)
-    ax.yaxis.set_major_formatter(mticker.FormatStrFormatter('%.0f%%'))
-    ax.xaxis.set_major_formatter(mdates.DateFormatter("%b %d"))
-    ax.xaxis.set_major_locator(mdates.WeekdayLocator(interval=2))
-    plt.xticks(rotation=30, fontsize=9)
+    for idx, exchange in enumerate(exchanges_with_data):
+        ax = axes[idx][0]
+        for coin in COINS:
+            rdf = rolling_24h_funding(data[exchange][coin])
+            if not rdf.empty:
+                ax.plot(rdf["timestamp"], rdf["rolling_24h_ann"],
+                        label=f"{coin} ({SYMBOLS[exchange][coin]})",
+                        color=coin_colors[coin],
+                        linewidth=1.3 if coin in ("BTC", "ETH") else 0.9,
+                        alpha=0.85)
 
-    fig.text(0.5, -0.02,
-             f"Data: Binance Vision S3 archive | Period: Nov 2025 – Jan 2026 | "
-             f"Positive = longs pay shorts",
-             ha="center", fontsize=8.5, color="#666666", style="italic")
+        ax.axhline(y=0, color="gray", linewidth=0.6, linestyle="-")
+        ax.set_ylabel("Annualized %", fontsize=10)
+        ax.set_title(f"{exchange} — Inverse Perps Rolling 24h Funding",
+                      fontsize=12, fontweight="bold")
+        ax.legend(loc="upper left", fontsize=9, ncol=4, framealpha=0.9)
+        ax.grid(True, alpha=0.25)
+        ax.yaxis.set_major_formatter(mticker.FormatStrFormatter('%.0f%%'))
 
+    axes[-1][0].xaxis.set_major_formatter(mdates.DateFormatter("%b %d"))
+    axes[-1][0].xaxis.set_major_locator(mdates.WeekdayLocator(interval=2))
+    plt.setp(axes[-1][0].xaxis.get_majorticklabels(), rotation=30, fontsize=9)
+
+    fig.suptitle("Rolling 24h Funding — All Exchanges Compared",
+                 fontsize=14, fontweight="bold", y=1.01)
     plt.tight_layout()
     plt.savefig(output_path, dpi=150, bbox_inches="tight", facecolor="white")
     plt.close()
     print(f"  Combined chart saved to {output_path}")
 
 
-# ── Main ───────────────────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════
+# Main
+# ══════════════════════════════════════════════════════════════════════════
 
 def main():
+    out_dir = SCRIPT_DIR
+
     print("=" * 65)
     print(" Inverse Perpetual Funding Rate Analysis")
-    print(" Exchanges: Binance, OKX, Bybit")
+    print(f" Exchanges: {', '.join(EXCHANGES)}")
     print(f" Coins: {', '.join(COINS)} | Lookback: {LOOKBACK_DAYS} days")
     print("=" * 65)
     print()
 
-    # Step 1: Load Binance historical data
-    print("[1/5] Loading Binance historical data from S3 archive ...")
-    data = load_all_data()
+    # ── Step 1: Fetch data ─────────────────────────────────────────────
+    current_rates = None  # only used in fallback mode
+
+    if CCXT_AVAILABLE:
+        print("[1/4] Fetching funding rates via ccxt ...")
+        data = fetch_all_ccxt()
+
+        # Check if ccxt actually returned data for all exchanges
+        ccxt_worked = all(
+            any(not data[ex][c].empty for c in COINS) for ex in EXCHANGES
+        )
+
+        if not ccxt_worked:
+            print()
+            print("  ccxt returned partial/no data — falling back to S3 + CoinGecko ...")
+            data_fb, current_rates = fetch_all_fallback()
+            # Merge: keep ccxt data where available, fill gaps with fallback
+            for ex in EXCHANGES:
+                for coin in COINS:
+                    if data[ex][coin].empty and not data_fb[ex][coin].empty:
+                        data[ex][coin] = data_fb[ex][coin]
+    else:
+        print("[1/4] ccxt not available — using S3 archive + CoinGecko fallback ...")
+        data, current_rates = fetch_all_fallback()
+
     print()
 
-    # Step 2: Fetch current snapshots from CoinGecko
-    print("[2/5] Fetching current funding snapshots from CoinGecko ...")
-    current_rates = fetch_coingecko_current_rates()
-    for (ex, coin), info in sorted(current_rates.items()):
-        ann = info["rate"] * PERIODS_PER_DAY * 365 * 100
-        print(f"  {ex:8s} {coin:5s} {info['symbol']:15s} current rate: {info['funding_rate_pct']:+.6f}%  "
-              f"(ann: {ann:+.2f}%)")
-    print()
-
-    # Step 3: Build summary table
-    print("[3/5] Building summary table ...")
+    # ── Step 2: Summary table ──────────────────────────────────────────
+    print("[2/4] Building summary table ...")
     summary = build_summary_table(data, current_rates)
 
-    # Print text table
     display_cols = ["Exchange", "Contract", "7d Ann. %", "30d Ann. %", "60d Ann. %", "90d Ann. %"]
     print()
-    print(summary[display_cols].to_string(index=False, float_format=lambda x: f"{x:+.2f}%" if pd.notna(x) else "N/A"))
+    print(summary[display_cols].to_string(
+        index=False,
+        float_format=lambda x: f"{x:+.2f}%" if pd.notna(x) else "N/A"
+    ))
     print()
 
-    # Save CSV
-    summary[display_cols].to_csv("/home/user/Claude/funding_summary.csv", index=False)
-    print("  CSV saved to funding_summary.csv")
+    summary[display_cols].to_csv(out_dir / "funding_summary.csv", index=False)
+    print(f"  CSV saved to {out_dir / 'funding_summary.csv'}")
     print()
 
-    # Step 4: Render table image
-    print("[4/5] Rendering formatted table ...")
-    render_table(summary, "/home/user/Claude/funding_table.png")
+    # ── Step 3: Table image ────────────────────────────────────────────
+    print("[3/4] Rendering formatted table ...")
+    render_table(summary, str(out_dir / "funding_table.png"))
     print()
 
-    # Step 5: Render charts
-    print("[5/5] Rendering rolling 24h funding charts ...")
-    render_chart(data, "/home/user/Claude/funding_chart_rolling24h.png")
-    render_combined_chart(data, "/home/user/Claude/funding_chart_combined.png")
+    # ── Step 4: Charts ─────────────────────────────────────────────────
+    print("[4/4] Rendering rolling 24h funding charts ...")
+    render_chart(data, str(out_dir / "funding_chart_rolling24h.png"))
+    render_combined_chart(data, str(out_dir / "funding_chart_combined.png"))
     print()
 
+    # ── Summary ────────────────────────────────────────────────────────
     print("=" * 65)
     print(" Analysis complete!")
-    print(" Output files:")
+    print(f" Output directory: {out_dir}")
     print("   - funding_summary.csv")
     print("   - funding_table.png")
     print("   - funding_chart_rolling24h.png")
     print("   - funding_chart_combined.png")
+
+    # Report data coverage
     print()
-    print(" NOTES:")
-    print("   - Binance data: Full history from S3 archive (Nov 2025 – Jan 2026)")
-    print("   - OKX & Bybit: Current snapshot only (APIs blocked in this env)")
-    print("   - OKX/Bybit values marked with * are point-in-time, not averaged")
+    for ex in EXCHANGES:
+        counts = {c: len(data[ex][c]) for c in COINS}
+        total = sum(counts.values())
+        if total > 0:
+            ranges = []
+            for c in COINS:
+                df = data[ex][c]
+                if not df.empty:
+                    ranges.append(f"{df['timestamp'].min():%Y-%m-%d}..{df['timestamp'].max():%Y-%m-%d}")
+            rng = ranges[0] if ranges else "N/A"
+            print(f"  {ex:8s}: {total:4d} total records ({rng})")
+        else:
+            print(f"  {ex:8s}: snapshot only (exchange API unreachable)")
+
+    if current_rates:
+        print()
+        print("  NOTE: OKX/Bybit values marked * are point-in-time snapshots,")
+        print("        not historical averages. Run locally for full history.")
     print("=" * 65)
 
 
